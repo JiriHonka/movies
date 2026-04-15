@@ -43,7 +43,9 @@
           -->
           <select class="form-select" id="genre" name="genre">
             <option value="">All genres</option>
-            <!-- your loop goes here -->
+            {% for genre in genres %}
+              <option value="{{ genre }}" {% if genre == selected_genre %}selected{% endif %}>{{ genre }}</option>
+            {% endfor %}
           </select>
         </div>
 
@@ -56,7 +58,9 @@
           -->
           <select class="form-select" id="director" name="director">
             <option value="">All directors</option>
-            <!-- your loop goes here -->
+            {% for director in directors %}
+              <option value="{{ director }}" {% if director == selected_director %}selected{% endif %}>{{ director }}</option>
+            {% endfor %}
           </select>
         </div>
 
@@ -146,24 +150,21 @@
 
                       For Duration: display it as "Xh Ym" (e.g. 152 min → "2h 32m")
             -->
-            <tr>
-              <td><strong>Example Movie</strong></td>
-              <td><span class="badge bg-secondary badge-genre">Genre</span></td>
-              <td>2024</td>
-              <td><span class="rating-pill rating-high">9.0</span></td>
-              <td>Some Director</td>
-              <td>2h 30m</td>
-              <td>USA</td>
-            </tr>
-            <tr>
-              <td><strong>Another Movie</strong></td>
-              <td><span class="badge bg-secondary badge-genre">Genre</span></td>
-              <td>2020</td>
-              <td><span class="rating-pill rating-mid">7.5</span></td>
-              <td>Other Director</td>
-              <td>1h 50m</td>
-              <td>France</td>
-            </tr>
+            {% for movie in movies %}
+              <tr>
+                <td><strong>{{ movie['title'] }}</strong></td>
+                <td><span class="badge bg-secondary badge-genre">{{ movie['genre'] }}</span></td>
+                <td>{{ movie['year'] }}</td>
+                <td>
+                  <span class="rating-pill {% if movie['rating'] >= 8.5 %}rating-high{% elif movie['rating'] >= 7.0 %}rating-mid{% else %}rating-low{% endif %}">
+                    {{ movie['rating'] }}
+                  </span>
+                </td>
+                <td>{{ movie['director'] }}</td>
+                <td>{{ (movie['duration'] // 60)|int }}h {{ movie['duration'] % 60 }}m</td>
+                <td>{{ movie['country'] }}</td>
+              </tr>
+            {% endfor %}
           </tbody>
         </table>
       </div>

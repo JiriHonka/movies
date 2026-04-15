@@ -20,13 +20,11 @@ def get_db_connection():
 def get_filter_options():
     conn = get_db_connection()
 
-    # TODO 1: Write a query that returns every distinct genre, sorted A→Z.
-    #         Store the results in `genres`.
-    genres = []
+    # Fetch distinct genres sorted alphabetically
+    genres = [row[0] for row in conn.execute("SELECT DISTINCT genre FROM movies ORDER BY genre ASC").fetchall()]
 
-    # TODO 2: Write a query that returns every distinct director, sorted A→Z.
-    #         Store the results in `directors`.
-    directors = []
+    # Fetch distinct directors sorted alphabetically
+    directors = [row[0] for row in conn.execute("SELECT DISTINCT director FROM movies ORDER BY director ASC").fetchall()]
 
     conn.close()
     return genres, directors
@@ -47,33 +45,37 @@ def index():
     rating_max = request.args.get("rating_max", type=float, default=10.0)
 
     # --- Build the SQL query dynamically -----------------------------------------
-    #
-    # We use a list of WHERE clauses and a matching list of parameter values.
-    # This is the safe way to handle user input — never build SQL by joining
-    # strings with user data directly!
-    #
-    # Example pattern:
-    #   conditions = ["year >= ?", "year <= ?"]
-    #   params     = [1990, 2010]
-    #   WHERE clause becomes: WHERE year >= ? AND year <= ?
-
     query      = "SELECT * FROM movies"
     conditions = []
     params     = []
 
-    # TODO 3: If `search` is not empty, add a condition that checks whether the
-    #         movie title CONTAINS the search text (case-insensitive).
-    #         Hint: use LIKE with % wildcards, e.g.  LIKE ?  with value "%text%"
-    #         Hint: wrap both sides in UPPER() to make it case-insensitive.
+    # Add condition for search text in title (case-insensitive)
+    if search:
+        conditions.append("UPPER(title) LIKE ?")
+        params.append(f"%{search.upper()}%")
 
-    # TODO 4: If `genre` is not empty, add a condition that matches the genre
-    #         exactly (case-insensitive).
+    # Add condition for genre (case-insensitive)
+    if genre:
+        conditions.append("UPPER(genre) = ?")
+        params.append(genre.upper())
 
-    # TODO 5: If `director` is not empty, add a condition that matches the
-    #         director exactly (case-insensitive).
+    # Add condition for director (case-insensitive)
+    if director:
+        conditions.append("UPPER(director) = ?")
+        params.append(director.upper())
 
-    # TODO 6: Add conditions for year_min, year_max, rating_min, rating_max
-    #         so that only movies within those ranges are returned.
+    # Add conditions for year and rating ranges
+    conditions.append("year >= ?")
+    params.append(year_min)
+
+    conditions.append("year <= ?")
+    params.append(year_max)
+
+    conditions.append("rating >= ?")
+    params.append(rating_min)
+
+    conditions.append("rating <= ?")
+    params.append(rating_max)
 
     # Assemble the final query
     if conditions:
@@ -81,9 +83,13 @@ def index():
 
     query += " ORDER BY rating DESC"
 
-    # TODO 7: Execute the query with `params` and fetch all results.
-    #         Store them in `movies`.
-    movies = []
+    # Execute the query and fetch results
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(query, params)
+    movies = cursor.fetchall()
+    conn.close()
 
     genres, directors = get_filter_options()
 
